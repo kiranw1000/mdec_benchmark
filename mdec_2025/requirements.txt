@@ -1,0 +1,9 @@
+accelerate
+diffusers>=0.31.0
+numpy
+Pillow
+scipy
+torch
+torchvision
+transformers
+tqdm
