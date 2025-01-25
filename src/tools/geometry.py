@@ -86,7 +86,7 @@ def to_log(depth: Tensor, /) -> Tensor:
 @ops.allow_np(permute=True)
 def to_inv(depth: Tensor, /) -> Tensor:
     """Convert linear depth into disparity."""
-    disp = (depth > 0) / depth.clamp(min=ops.eps(depth))
+    disp = 1 / depth.clamp(min=ops.eps(depth))
     return disp
 
 

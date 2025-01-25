@@ -93,9 +93,20 @@ class MonoDepthEvaluator:
         if self.use_eigen_crop: mask &= self._get_eigen_mask(target.shape)
         return mask
 
-    def _get_ratio(self, pred: NDArray, target: NDArray) -> float:
-        """Helper to get the prediction scaling ratio based on the evaluation mode. Stereo=fixed, Mono=median."""
-        return self.STEREO_SF if self.mode == 'stereo' else float(np.median(target)/np.median(pred))
+    @staticmethod
+    def _align_least_squares(prediction, target, mask, pred_pct=5):
+        if pred_pct > 0:
+            prediction_low, prediction_high = np.percentile(prediction[mask], [pred_pct, 100 - pred_pct])
+            mask = mask & (prediction > prediction_low) & (prediction < prediction_high) 
+        prediction_masked = prediction[mask].reshape((-1, 1))
+        target_masked = target[mask].reshape((-1, 1))
+        _ones = np.ones_like(target_masked)
+        A = np.concatenate([prediction_masked, _ones], axis=-1)
+        X = np.linalg.lstsq(A, target_masked)[0]
+        scale_np, shift_np = X
+        scale, shift = scale_np[0], shift_np[0]
+        prediction = prediction * scale + shift
+        return prediction
 
     def _upsample(self, pred: NDArray, target: NDArray) -> NDArray:
         """Helper to upsample the prediction to the full target resolution."""
@@ -119,11 +130,14 @@ class MonoDepthEvaluator:
                      subcat: Optional[str],
                      metrics: Sequence[str]) -> Metrics:
         """Helper to compute metrics from a single prediction."""
+        assert mask.dtype == bool, mask.dtype
+        assert mask.shape == pred.shape == target.shape
         if mask.sum() == 0: return {}
-        pred_mask, target_mask = pred[mask], target[mask]
 
-        r = self._get_ratio(pred_mask, target_mask)
-        pred, pred_mask = (r*pred).clip(self.min, self.max), (r*pred_mask).clip(self.min, self.max)
+        pred = MonoDepthEvaluator._align_least_squares(pred, target, mask)
+        pred = pred.clip(self.min, self.max)
+        pred_mask = pred[mask]
+        target_mask = target[mask]
 
         ms = {'Ratio': r}
         if cat: ms['Cat'] = str(cat)
@@ -137,11 +151,12 @@ class MonoDepthEvaluator:
 
         return ms
 
-    def run(self, preds: NDArray, data: ArrDict) -> Sequence[Metrics]:
+    def run(self, preds: NDArray, data: ArrDict, pred_type: str = "disparity") -> Sequence[Metrics]:
         """Compute evaluation metrics over a whole dataset, specified by the target `data`.
 
         :param preds: (ndarray) (b, h, w) Unscaled disparity predictions, where `b=len(dataset)`.
         :param data: (ArrDict) Network targets (depth, *K, *edge, *cat, *subcat) loaded from an `.npz` file.
+        :param pred_type: (str) Prediction type: "affine-invariant" (new) or "disparity" (old, default).
         :return: (list(Metrics)) Computed metrics for each dataset item.
         """
         targets, Ks, edges = data['depth'], data.get('K'), data.get('edge')
@@ -152,7 +167,9 @@ class MonoDepthEvaluator:
         ts = [t.astype(np.float32) for t in targets]
         # ts = ts[:100]  # For testing on a few examples.
         ms = [self._get_mask(t) for t in ts]
-        ps = [to_inv(self._upsample(p, t)) for p, t in zip(preds, ts)]
+        ps = [self._upsample(p, t) for p, t in zip(preds, ts)]
+        if pred_type == "disparity":
+            ps = [to_inv(p) for p in ps]
         if Ks is None: Ks = [None]*len(ts)
         if cats is None: cats = [None]*len(ts)
         if subcats is None: subcats = [None]*len(ts)
