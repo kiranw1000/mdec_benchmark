@@ -3,8 +3,9 @@ import sys
 import numpy as np
 import torch
 from diffusers.pipelines.marigold.marigold_image_processing import MarigoldImageProcessor
-from transformers import pipeline
+from transformers import pipeline, AutoImageProcessor
 from tqdm import tqdm
+import argparse
 
 PATH_SELF_DIR = os.path.dirname(__file__)
 PATH_MDEC_2025 = os.path.realpath(os.path.join(PATH_SELF_DIR, ".."))
@@ -25,8 +26,11 @@ def visualize_disparity_as_affine_invariant(disparity):
 
 
 if __name__ == "__main__":
-    assert len(sys.argv) == 2 and sys.argv[1] in ("val", "test"), "Usage: python generate.py [val | test]"
-    SPLIT = sys.argv[1]
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--split", type=str, default="val", choices=["val", "test"])
+    parser.add_argument("--model", type=str, default="5524-Group/1-Epoch-nt")
+    args = parser.parse_args()
+    SPLIT = args.split
     PATH_SYNS_PATCHES_ZIP = f"{PATH_MDEC_2025}/syns_patches.zip"
     PATH_OUTPUTS = f"{PATH_SELF_DIR}/visualization_{SPLIT}"
     os.makedirs(PATH_OUTPUTS, exist_ok=True)
@@ -35,7 +39,13 @@ if __name__ == "__main__":
     if torch.cuda.is_available():
         device = torch.device("cuda")
 
-    pipe = pipeline(task="depth-estimation", model="depth-anything/Depth-Anything-V2-Large-hf")
+    processor = AutoImageProcessor.from_pretrained("depth-anything/Depth-Anything-V2-Small-hf")
+    pipe = pipeline(
+        task="depth-estimation",
+        model=args.model,
+        image_processor=processor,
+        device=device
+    )
 
     out = []
     for idx, (img, img_path) in enumerate(tqdm(SynsPatchesAccessor(PATH_SYNS_PATCHES_ZIP, SPLIT), leave=False)):
