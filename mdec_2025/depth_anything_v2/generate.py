@@ -8,6 +8,7 @@ from tqdm import tqdm
 import argparse
 import cv2
 from PIL import Image
+import huggingface_hub as hf
 
 PATH_SELF_DIR = os.path.dirname(__file__)
 PATH_MDEC_2025 = os.path.realpath(os.path.join(PATH_SELF_DIR, ".."))
@@ -87,11 +88,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--split", type=str, default="val", choices=["val", "test"])
     parser.add_argument("--model", type=str, default="5524-Group/1-Epoch-nt")
+    parser.add_argument("--hf_token", type=str)
     args = parser.parse_args()
     SPLIT = args.split
     PATH_SYNS_PATCHES_ZIP = f"{PATH_MDEC_2025}/syns_patches.zip"
     PATH_OUTPUTS = f"{PATH_SELF_DIR}/visualization_{SPLIT}"
     os.makedirs(PATH_OUTPUTS, exist_ok=True)
+    
+    hf.login(token=args.hf_token)
 
     device = torch.device("cpu")
     if torch.cuda.is_available():
