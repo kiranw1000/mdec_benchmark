@@ -14,7 +14,6 @@ if __name__ == "__main__":
 
     # Load the prediction files
     pred_val = np.load(args.pred_path)['pred'] 
-    # pred_test = np.load('/Users/kiran/Documents_local/CSE_5524/mdec_benchmark/pred.npz')['pred']
 
     def visualize_depth(disparity):
         mask_valid = disparity > 0

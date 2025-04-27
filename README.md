@@ -45,6 +45,6 @@ This will install all necessary python packages and create a new file called ```
 Finally, to visualize the results run this command with the indices of the desired images to visualize depth maps for.
 
 ```bash
-python mdec_2025/depth_anything_v2/visualize.py --image_indices 0 1 2
+python mdec_2025/depth_anything_v2/visualize.py --image_indices 0 1 2 --pred_path "mdec_2025/depth_anything_v2/pred_val.npz"
 ```
 This will display the images in a new window.
