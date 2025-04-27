@@ -24,3 +24,27 @@ This repository is forked from the original SYNS-Patches starter pack and has be
 - 📊 **Updated Evaluation Pipeline:** The Codalab grader code has been [updated](src/core/evaluator.py) to accommodate the newly supported prediction types.
 
 ### 🚀 More information is available on the official [<img src="https://img.shields.io/badge/%F0%9F%A4%8D%E2%80%83Challenge%20-Website-blue" height=16px alt="Website Badge">](https://jspenmar.github.io/MDEC/)
+
+# Generating Results
+
+First we must download the MDEC validation set zip file.
+
+```bash
+sh mdec_2025/download_syns_patches.sh 
+```
+This will generate a file called ```syns_patches.zip``` in the ```mdec_2025``` directory
+
+Than we have to generate the results of running the model on those results.
+
+```bash
+pip install -r requirements.txt
+python mdec_2025/depth_anything_v2/generate.py --split "val"
+```
+This will install all necessary python packages and create a new file called ```pred_val.npz``` in the ```mdec_2025/depth_anything_v2``` directory. (This will take around 10 minutes on most laptops depending on hardware)
+
+Finally, to visualize the results run this command with the indices of the desired images to visualize depth maps for.
+
+```bash
+python mdec_2025/depth_anything_v2/visualize.py --image_indices 0 1 2
+```
+This will display the images in a new window.
