@@ -88,14 +88,16 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--split", type=str, default="val", choices=["val", "test"])
     parser.add_argument("--model", type=str, default="5524-Group/1-Epoch-nt")
-    parser.add_argument("--hf_token", type=str)
     args = parser.parse_args()
     SPLIT = args.split
     PATH_SYNS_PATCHES_ZIP = f"{PATH_MDEC_2025}/syns_patches.zip"
     PATH_OUTPUTS = f"{PATH_SELF_DIR}/visualization_{SPLIT}"
     os.makedirs(PATH_OUTPUTS, exist_ok=True)
     
-    hf.login(token=args.hf_token)
+    # The line `hf.login(token=args.hf_token)` is logging into the Hugging Face Hub using the provided
+    # token. The `hf.login()` function is used to authenticate the user with the Hugging Face Hub by
+    # providing an API token. This token allows the script to access and interact with models and
+    # resources hosted on the Hugging Face Hub.
 
     device = torch.device("cpu")
     if torch.cuda.is_available():
