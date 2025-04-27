@@ -37,7 +37,7 @@ This will generate a file called ```syns_patches.zip``` in the ```mdec_2025``` d
 Than we have to generate the results of running the model on those results.
 
 ```bash
-pip install -r requirements.txt
+pip install -r mdec_2025/requirements.txt
 python mdec_2025/depth_anything_v2/generate.py --split "val"
 ```
 This will install all necessary python packages and create a new file called ```pred_val.npz``` in the ```mdec_2025/depth_anything_v2``` directory. (This will take around 10 minutes on most laptops depending on hardware)
